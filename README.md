@@ -1,0 +1,90 @@
+# Little Genius World · 小小天才世界
+
+React + TypeScript + Vite 的完整儿童益智网页游戏，适合 3–5 岁，由家长陪伴使用。纯前端，无账户、广告或付费，无后端数据库。
+
+## 打开和预览
+
+安装 Node.js 22 或更高版本。解压源码，进入包含 package.json 的文件夹：
+
+```bash
+npm install
+npm run dev
+```
+
+打开终端显示的地址，通常是 http://localhost:5173 。不要直接双击 index.html，因为源代码需要 Vite 编译。
+
+iPhone / iPad 真机：与电脑连接同一个 Wi-Fi，将 localhost 换成电脑局域网 IP，例如 http://192.168.1.10:5173 。防火墙需要允许该端口。
+
+## 已实现
+
+- 数字乐园：数 1–10 个物品，选择数字。每轮随机覆盖 1–10。
+- 形状配对：圆形、正方形、三角形、星形、爱心、菱形，随机抽取 10 题。
+- 颜色世界：红、橙、黄、绿、蓝、紫，随机抽取 10 题。
+- 动物乐园：12 种动物，每轮抽取 10 题。
+- 每题 4 个不重复选项，顺序随机；无限轮次。
+- 答对获得一颗星星和 Web Audio 和弦音效；答错温柔鼓励，可重试且不扣星；每题仅奖励一次。
+- 中英文即时切换；点击题目旁的喇叭可朗读题目（使用设备语音，是否有中英文语音取决于系统）。
+- 本地保存星星、每个游戏的当前题目、已答状态、完成轮次、语言和音效设置。
+- 手机竖屏、平板横屏、桌面布局；触控按钮、键盘焦点、状态播报、减少动画偏好。
+
+声音通过点击答案触发，符合 iOS 用户手势要求。浏览器静音或音量为零时可能听不到声音。字体使用可选的 Google Fonts，断网时使用系统字体。插图为内嵌 SVG / CSS，动物和物品使用系统 Emoji，设备上外观略有区别。
+
+## 测试和构建
+
+```bash
+npm test
+npm run build
+npm run preview
+```
+
+测试覆盖四类游戏的题数、答案唯一性、随机顺序，以及损坏存储的容错和进度恢复。build 先进行 TypeScript 检查，再生成 dist。preview 通常使用 http://localhost:4173 。
+
+手动验收：
+1. 依次打开四个游戏，先选错再选对；确认提示、星星和音效；快速连点正确答案，确认只加一颗星。
+2. 每个游戏完成 10 题，确认结算和再次开局。
+3. 答题中回首页、刷新页面，再点原游戏；确认题目和星星恢复，已经答对的题不重复奖励。
+4. 切换中英文，确认首页、题目、选项标签和结算同步变化。
+5. 在 390 × 844 手机竖屏、1024 × 768 平板横屏和桌面宽度测试，确认无水平溢出，所有答案可触摸。
+6. 关闭音效并刷新，确认设置保存。iOS Safari 真机试听；设备需要有可用语音才能朗读。
+
+存储键为 `little-genius-world-v1`。数据只保存在当前浏览器/设备，不跨设备同步。隐私模式或禁用存储时显示提示，并可继续本次游玩。清理浏览器站点数据会清除进度；需要重置时可以在浏览器开发工具运行 `localStorage.removeItem('little-genius-world-v1')` 后刷新。
+
+## 部署到 Vercel（无需后端）
+
+方式一：将源码推送到自己的 GitHub 仓库，在 Vercel 点击 Add New → Project，导入该仓库。
+
+- Framework Preset：Vite
+- Install Command：npm install（已有锁文件也可 npm ci）
+- Build Command：npm run build
+- Output Directory：dist
+- 不需要环境变量。
+
+点击 Deploy，完成后使用 Vercel 提供的 HTTPS 地址，iPhone/iPad 可直接打开。Vercel 账户只用于开发者部署，游戏访客无需登录。
+
+方式二：在项目目录使用 Vercel CLI：
+
+```bash
+npx vercel
+# 按提示登录并创建项目，预览通过后：
+npx vercel --prod
+```
+
+也可把 dist 部署到任何静态网站托管服务。本项目没有基于路径的客户端路由，不需要额外的 SPA 重写规则。
+
+## 目录
+
+- src/main.tsx：界面、交互、音效和存储。
+- src/game.ts：题库、随机生成、数据类型和存储校验。
+- src/style.css：响应式样式和手绘卡通元素。
+- src/game.test.ts：题库与恢复测试。
+- vite.config.ts / tsconfig.json：开发与构建配置。
+
+## 验证范围
+
+以随附 VALIDATION.md 为准。浏览器布局与 iOS 音频需要真机确认，自动化题库测试不能替代真实浏览器操作。
+
+## Codex Web Preview 连接排查
+
+开发服务器必须持续运行，当前项目 dev 已配置监听 `0.0.0.0`。2026-11-12 排查时，官方 `sites-preview` 返回 `relay could not open browser port 4173: timed out waiting for relay readiness`；这是 Codex 预览转发链路的问题。直接启动 Vite 后，5173 监听正常，首页与 React 模块均返回 HTTP 200，但这不等于已经获得公网或 Codex 可点击的预览地址。远程容器的 localhost 和私网 IP 不能直接给本机或 iPhone 使用。
+
+已提供 vercel.json 自动识别 Vite、构建命令和 dist 输出。无需终端的部署方式：把源码（不含 node_modules）上传到 GitHub 仓库，在 https://vercel.com/new 导入该仓库，直接点击 Deploy。完成后在电脑和 iPhone 打开 Vercel 返回的 HTTPS 链接即可。首次需要你登录并授权自己的 GitHub/Vercel 账户；游戏访客不需要账户。
